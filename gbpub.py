@@ -185,14 +185,4 @@ if __name__ == "__main__":
 
     grand_battle = GrandBattle(thread_number)
     compost_pile.write(grand_battle.soup.prettify("utf-8"))
-
-# Parse thread HTML and extract posts into a pseudo-XML format for examination
-    # <Post>
-    # <Author>MrGuy</author>
-    # <Content>Blah</content>
-# Also count the number of posts per user in an associative array
-# [OP=4, MrGuy=8, PickYerPoison=9] etc.
-
-# Remove posts by non-players (those who submitted a profile but don't have any hefty posts)
-
-# Determine the players and the game master(s), store this information
+    print grand_battle.get_ranked_authors_list()
