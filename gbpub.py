@@ -128,17 +128,24 @@ class Thread(object):
         most HTML markup. Keeps <b> and <i> tags for future epub usage.
 
         Defaults to the first post if no post number is specified.
-
-        !!! UNFINISHED !!!
         """
         post_number = self.validate_post_number(post_number)
         post = self.get_post(post_number)
+        post_content = post.find("blockquote", "restore")
 
-        post_text = str(post)
+        post_text = str(post_content)
         post_text = (post_text.replace("<b>", "~~~~~b~~~~~")
                               .replace("</b>", "~~~~~/b~~~~~"))
         post_text = (post_text.replace("<i>", "~~~~~i~~~~~")
                               .replace("</i>", "~~~~~/i~~~~~"))
+
+        post_content = BeautifulSoup(post_text)
+        post_text = post_content.get_text()
+        post_text = (post_text.replace("~~~~~b~~~~~", "<b>")
+                              .replace("~~~~~/b~~~~~", "</b>"))
+        post_text = (post_text.replace("~~~~~i~~~~~", "<i>")
+                              .replace("~~~~~/i~~~~~", "</i>"))
+        return post_text
 
     def validate_post_number(self, post_number):
         """
@@ -184,5 +191,10 @@ if __name__ == "__main__":
     compost_pile = open("C:/users/austin/root/tmp/temp.txt", "w")
 
     grand_battle = GrandBattle(thread_number)
-    compost_pile.write(grand_battle.soup.prettify("utf-8"))
-    print grand_battle.get_ranked_authors_list()
+    #compost_pile.write(grand_battle.soup.prettify("utf-8"))
+    #print grand_battle.get_ranked_authors_list()
+    compost_pile.write(grand_battle.get_post(1).prettify("utf-8"))
+    compost_pile.write("~ ~ ~~~ NEXT LINE BEGINS GETCONTENT ~~~ ~ ~\n")
+    compost_pile.write(grand_battle.get_post_content(1).encode("utf-8"))
+    #for string in grand_battle.get_post(1).stripped_strings:
+    #    compost_pile.write("{0}\n".format(string.encode("utf-8")))
