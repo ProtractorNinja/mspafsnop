@@ -48,6 +48,8 @@ class Post(object):
             self._author = str(post_tag.find("span", "username").get_text()
                 .strip())
             self._post_number = int(post_tag['id'].replace("post_", ""))
+            self._post_tag = (post_tag.find("blockquote", "restore")
+                              .replace_with_children())
 
             # If the date & time formatting option for the forum isn't
             # the "friendly" setting (i.e. "Two minutes ago"), date and
@@ -104,8 +106,8 @@ class Post(object):
                     pass
         # Do this if the post isn't actually a post
         # Add error types for different things
-        except:
-            pass
+        except Exception as e:
+            raise e
 
     @property
     def author(self):
@@ -147,13 +149,31 @@ class Post(object):
         """
         return self._datetime.time()
 
-    # get pure HTML content string (not including author etc)
+    @property
+    def html(self):
+        """Get the pure HTML content of the post."""
+        return str(self._post_tag)
 
-    # get BS4 content tag
+    @property
+    def tag(self):
+        """Get the post's BS4 content tag."""
+        return self._post_tag
 
-    # get clean content (*ignoretags, **flags)
-        # Unwraps tags to text, does not unwrap ignored tags
-        # flags:
-            # spoilers, s = true :: removes spoilers
-            # regex, r = <REGEX> :: removes matches, can take a list
-            # trim, t = false :: doesn't cut multiple lines to single
+    def get_clean_content(self, **kwargs):
+        """
+        Get a cleaned-up, non-html version of a post's content.
+
+        Optional Keyword Arguments:
+        spoilers (bool) -- If true, remove all evidence of spoilers in
+                           the post. Default is true.
+        trim (bool) -- If true, cuts multiple newlines to a single
+                       newline in the cleaned text. Default is true.
+        ignoretags (list) -- A list of tags to be ignored (that is,
+                             *not* unwrapped to just text) in the
+                             cleaning process. Default is none.
+        regex (list) -- Removes all matches to the given regular
+                        expression in the post. Default is none.
+
+        """
+
+        pass
