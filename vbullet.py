@@ -193,3 +193,28 @@ class Post(object):
     def tag(self):
         """Get the post's BS4 content tag."""
         return self._post_tag
+
+    # Sorting functions
+    def __eq__(self, other):
+        """Determine if this post is the same as another"""
+        return self._post_tag == other._post_tag
+
+    def __ne__(self, other):
+        """Determine if this post is not the same as another"""
+        return self._post_tag != other._post_tag
+
+    def __lt__(self, other):
+        """Determine if this post comes before another"""
+        return self._post_number < other._post_number
+
+    def __le__(self, other):
+        """Determine if this post comes before or is next to another"""
+        return self._post_number <= other._post_number
+
+    def __gt__(self, other):
+        """Determine if this post comes after another"""
+        return self._post_number > other._post_number
+
+    def __ge__(self, other):
+        """Determine if this post comes after or is next to another"""
+        return self._post_number >= other._post_number
