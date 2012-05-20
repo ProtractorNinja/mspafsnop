@@ -22,13 +22,18 @@ class Post(object):
 
         Optional Arguments:
         date_format -- A 'y-m-d' style string representing the
-            way the forum formats dates.
+            way the forum formats dates. None by default.
         time_format -- An 'm:s' style string representing the exact
-            way the forum formats time strings.
+            way the forum formats time strings. None by default.
 
-        The optional arguments are only optional if dates are known to
-        be in the "x units ago" format. Use the PHP date function
-        documentation for string reference.
+        date_format and time_format are unnecessary if the forum date
+        and time are in the "friendly" (e.g. "5 minutes ago") format.
+        Otherwise, if the formatting arguments' values are None, then
+        date and time will not be calculated unless the date is given as
+        "today" or "yesterday." Post object calls to date, time, and
+        datetime will return None if so.
+
+        Use the PHP date function documentation for string reference.
 
         Example:
         Say the post's post time data says "07 Mon 2012 18:22"
@@ -44,16 +49,36 @@ class Post(object):
 
         """
 
-        try:
-            self._author = str(post_tag.find("span", "username").get_text()
-                .strip())
-            self._post_number = int(post_tag['id'].replace("post_", ""))
-            self._post_tag = (post_tag.find("blockquote", "restore")
-                              .replace_with_children())
+        self._author = str(post_tag.find("span", "username").get_text()
+            .strip())
+        self._post_number = int(post_tag['id'].replace("post_", ""))
+        self._post_tag = (post_tag.find("blockquote", "restore")
+                          .replace_with_children())
 
+        # Date and time calculation begins with determining whether
+        # or not the post date and time are formatted in the
+        # "friendly" manner, e.g. "x minutes ago."
+        datetime_string = post_tag.find("div", "datetime").get_text()
+        if "ago" in datetime_string:
+            date_data = datetime_string.split(" ")
+            unit_type = date_data[1].lower()
+            units = int(date_data[0])
+            if "minute" in unit_type:
+                self._datetime = datetime.now() - timedelta(minutes=units)
+            elif "hour" in unit_type:
+                self._datetime = datetime.now() - timedelta(hours=units)
+            elif "day" in unit_type:
+                self._datetime = datetime.now() - timedelta(days=units)
+            elif "week" in unit_type:
+                self._datetime = datetime.now() - timedelta(weeks=units)
+            elif "year" in unit_type:
+                self._datetime = datetime.now() - timedelta(years=units)
+            else:
+                self._datetime = datetime.now()
+        else:
             # If the date & time formatting option for the forum isn't
-            # the "friendly" setting (i.e. "Two minutes ago"), date and
-            # time are always separated by the character sequence ", ".
+            # on the friendly setting, date and time are always
+            # separated by the character sequence ", ".
             #
             # However, the date string may include these characters as
             # well, so separating the datetime string based on ", " may
@@ -63,51 +88,66 @@ class Post(object):
             # string) instance of " ," (the separator, reversed), then
             # each entry in the new list is reversed to get the natural
             # ordering back.
-            post_datetime = (post_tag.find("div", "datetime").get_text()[::-1]
-                .split(" ,", maxsplit=1))
-            post_datetime = [lambda x: x[::-1] for x in post_datetime]
-            post_date = datetime[0]
+            datetime_list = datetime_string[::-1].split(" ,", maxsplit=1)
+            datetime_list = [lambda x: x[::-1] for x in datetime_list]
+            date_string = datetime_list[0]
+            time_string = datetime_list[1]
 
-            if "ago" in post_date:
-                date_data = date.split(" ")
-                unit_type = date_data[1].lower()
-                units = int(date_data[0])
-                if "minute" in unit_type:
-                    self._datetime = datetime.now() - timedelta(minutes=units)
-                elif "hour" in unit_type:
-                    self._datetime = datetime.now() - timedelta(hours=units)
-                elif "day" in unit_type:
-                    self._datetime = datetime.now() - timedelta(days=units)
-                elif "week" in unit_type:
-                    self._datetime = datetime.now() - timedelta(weeks=units)
-                elif "year" in unit_type:
-                    self._datetime = datetime.now() - timedelta(years=units)
-                else:
-                    self._datetime = datetime.now()
+            if "today" in date_string:
+                post_date = date.today()
+            elif "yesterday" in date_string:
+                post_date = date.today() - timedelta(days=1)
+                pass
+            elif not date_format is None:
+                try:
+                    post_date = (datetime.strptime(date_string,
+                                 date_format).date())
+                except ValueError:
+                    raise ValueError("Date format '{0}' does not match string "
+                                     "'{1}'.".format(date_format, date_string))
             else:
-                if "today" in date:
-                    # Today's date calculation
-                    pass
-                elif "yesterday" in date:
-                    # Yesterday's date calculation
-                    pass
-                elif not date_format is None:
-                    # Attempt to calculate date from string
-                    pass
-                else:
-                    # Use today or raise error
-                    pass
+                post_date = date.min
 
-                if not time_format is None:
-                    # Attempt to calculate time from string
-                    pass
-                else:
-                    # Use now or raise error
-                    pass
-        # Do this if the post isn't actually a post
-        # Add error types for different things
-        except Exception as e:
-            raise e
+            if not time_format is None:
+                try:
+                    post_time = (datetime.strptime(time_string, time_format)
+                                 .time())
+                except ValueError:
+                    raise ValueError("Time format '{0}' does not match string "
+                                     "'{1}'.".format(time_format, time_string))
+            else:
+                post_time = time.min
+
+            self._datetime = datetime.combine(post_date, post_time)
+
+    def get_clean_content(self, **kwargs):
+        """
+        Get a cleaned-up, non-html version of a post's content.
+
+        Optional Keyword Arguments:
+        spoilers (bool) -- If true, remove all evidence of spoilers in
+                           the post. Default is true.
+        trim (bool) -- If true, cuts multiple newlines to a single
+                       newline in the cleaned text. Default is true.
+        ignoretags (list) -- A list of tags to be ignored (that is,
+                             *not* unwrapped to just text) in the
+                             cleaning process. Default is none.
+        regex (list) -- Removes all matches to the given regular
+                        expression in the post. Default is none.
+
+        """
+
+        if kwargs.get("spoilers", True):
+            pass
+
+        if kwargs.get("trim", False):
+            pass
+
+        if kwargs.get("ignoretags", None):
+            pass
+
+        if kwargs.get("regex", None):
+            pass
 
     @property
     def author(self):
@@ -134,20 +174,28 @@ class Post(object):
         """
         Get the date on which the post was made.
 
-        Returns a date object.
+        Returns a date object, unless there was a problem parsing a date
+        object from the post, in which case a value of None is returned.
 
         """
-        return self._datetime.date()
+        if self._datetime.date() == date.min:
+            return None
+        else:
+            return self._datetime.date()
 
     @property
     def time(self):
         """
         Get the time at which the post was made.
 
-        Returns a time object.
+        Returns a time object, unless there was a problem parsing a time
+        object from the post, in which case a value of None is returned.
 
         """
-        return self._datetime.time()
+        if self._datetime.time() == time.min:
+            return None
+        else:
+            return self._datetime.time()
 
     @property
     def html(self):
@@ -158,22 +206,3 @@ class Post(object):
     def tag(self):
         """Get the post's BS4 content tag."""
         return self._post_tag
-
-    def get_clean_content(self, **kwargs):
-        """
-        Get a cleaned-up, non-html version of a post's content.
-
-        Optional Keyword Arguments:
-        spoilers (bool) -- If true, remove all evidence of spoilers in
-                           the post. Default is true.
-        trim (bool) -- If true, cuts multiple newlines to a single
-                       newline in the cleaned text. Default is true.
-        ignoretags (list) -- A list of tags to be ignored (that is,
-                             *not* unwrapped to just text) in the
-                             cleaning process. Default is none.
-        regex (list) -- Removes all matches to the given regular
-                        expression in the post. Default is none.
-
-        """
-
-        pass
