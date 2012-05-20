@@ -20,5 +20,5 @@ GBPub is a program designed to turn an MSPAFA Grand Battle into an eReader-compa
 
 - [lxml](http://lxml.de/)
 - [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/)
-- Python ePub Builder, included
+- Python ePub Builder, which will be included in the future
 - vBullet!, included
