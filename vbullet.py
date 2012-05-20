@@ -86,7 +86,7 @@ class Author(dict):
         """
         return sorted(self.keys())
 
-    # Comparator functions
+    # Sort-related function overrides
     def __eq__(self, other):
         """Determine if this author is the same as another"""
         return self.name == other.name
@@ -122,7 +122,7 @@ class Author(dict):
         """
         return len(self) >= len(other)
 
-    # Collection functions
+    # Collection-related function overrides
     def __contains__(self, item):
         """
         Determine if this author has made a given post by number or
@@ -346,7 +346,7 @@ class Post(object):
         """
         return self._time
 
-    # Sorting functions
+    # Sort-related function overrides
     def __eq__(self, other):
         """Determine if this post is the same as another."""
         return self._post_tag == other._post_tag
