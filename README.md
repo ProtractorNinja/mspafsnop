@@ -1,16 +1,22 @@
-Grand Battle ePub Generator -- GBPub
-====================================
+GBPub and vBullet!
+==================
+Both of these programs were created by the Austin Anderson - "The Protractor Ninja" - and are licensed under very similar BSD licenses. See each license file for details.
 
-This script has been designed for two purposes. One was its practical purpose,
-that is, creating an ePub book out of an MSPAF Grand Battle. The second was to
-teach myself Git, which has proven itself a worthy adversary.
+One day, these two projects will be split into their very own repositories. But not now.
 
-GBPub chiefly uses Beautiful Soup 4 for HTML parsing, which depends on lxml.
-Furthermore, GBPub implements python-epub-builder as the primary means of
-building an ePub file, which depends on Genshi, lxml (again), and epubcheck.
+vBullet! The vBulletin Thread Parser
+------------------------------------
+vBullet! is a Python class designed to parse vBulletin forum threads. Its
+dependencies are:
 
-It is because of these things that I found out about easy_install.
+- [lxml](http://lxml.de/)
+- [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/)
 
-I haven't included the epub builder script in this git repository due to 
-uncertainty with licensing. I'll get to it later, I suppose, because for now
-I'm only concerned with slaying Git and becoming its one true master.
+GBPub, the Grand-Battle-to-ePub-inator
+--------------------------------------
+GBPub is a program designed to turn an MSPAFA Grand Battle into an eReader-compatible eBook. Its dependencies are:
+
+- [lxml](http://lxml.de/)
+- [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/)
+- Python ePub Builder, included
+- vBullet!, included
