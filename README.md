@@ -1,6 +1,6 @@
 GBPub and vBullet!
 ==================
-Both of these programs were created by the Austin Anderson - "The Protractor Ninja" - and are licensed under very similar BSD licenses. See each license file for details.
+Both of these programs were created by Austin "Protractor Ninja" Anderson.
 
 One day, these two projects will be split into their very own repositories. But not now.
 
@@ -11,6 +11,8 @@ dependencies are:
 
 - [lxml](http://lxml.de/)
 - [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/)
+
+vBullet! is licensed under a very simple BSD license. See vbullet-license.txt for details.
 
 GBPub, the Grand-Battle-to-ePub-inator
 --------------------------------------
