@@ -1,7 +1,6 @@
 # vBullet! vBulletin Thread Parser
 #!/usr/bin/env python
 
-from bs4 import BeautifulSoup, element
 from datetime import timedelta, date, datetime, time
 import re
 
@@ -25,6 +24,10 @@ class Post(object):
             way the forum formats dates. None by default.
         time_format -- An 'm:s' style string representing the exact
             way the forum formats time strings. None by default.
+
+        Raises:
+        ValueError -- raised if a given date or time format string is
+        invalid for the string it tries to parse.
 
         date_format and time_format are unnecessary if the forum date
         and time are in the "friendly" (e.g. "5 minutes ago") format.
@@ -64,17 +67,20 @@ class Post(object):
             unit_type = date_data[1].lower()
             units = int(date_data[0])
             if "minute" in unit_type:
-                self._datetime = datetime.now() - timedelta(minutes=units)
+                post_datetime = datetime.now() - timedelta(minutes=units)
             elif "hour" in unit_type:
-                self._datetime = datetime.now() - timedelta(hours=units)
+                post_datetime = datetime.now() - timedelta(hours=units)
             elif "day" in unit_type:
-                self._datetime = datetime.now() - timedelta(days=units)
+                post_datetime = datetime.now() - timedelta(days=units)
             elif "week" in unit_type:
-                self._datetime = datetime.now() - timedelta(weeks=units)
+                post_datetime = datetime.now() - timedelta(weeks=units)
             elif "year" in unit_type:
-                self._datetime = datetime.now() - timedelta(years=units)
+                post_datetime = datetime.now() - timedelta(years=units)
             else:
-                self._datetime = datetime.now()
+                post_datetime = datetime.now()
+
+            self._date = post_datetime.date()
+            self._time = post_datetime.time()
         else:
             # If the date & time formatting option for the forum isn't
             # on the friendly setting, date and time are always
@@ -94,31 +100,28 @@ class Post(object):
             time_string = datetime_list[1]
 
             if "today" in date_string:
-                post_date = date.today()
+                self._date = date.today()
             elif "yesterday" in date_string:
-                post_date = date.today() - timedelta(days=1)
-                pass
+                self._date = date.today() - timedelta(days=1)
             elif not date_format is None:
                 try:
-                    post_date = (datetime.strptime(date_string,
+                    self._date = (datetime.strptime(date_string,
                                  date_format).date())
                 except ValueError:
                     raise ValueError("Date format '{0}' does not match string "
                                      "'{1}'.".format(date_format, date_string))
             else:
-                post_date = date.min
+                self._date = None
 
             if not time_format is None:
                 try:
-                    post_time = (datetime.strptime(time_string, time_format)
+                    self._time = (datetime.strptime(time_string, time_format)
                                  .time())
                 except ValueError:
                     raise ValueError("Time format '{0}' does not match string "
                                      "'{1}'.".format(time_format, time_string))
             else:
-                post_time = time.min
-
-            self._datetime = datetime.combine(post_date, post_time)
+                self._time = None
 
     def get_clean_content(self, **kwargs):
         """
@@ -168,10 +171,7 @@ class Post(object):
         object from the post, in which case a value of None is returned.
 
         """
-        if self._datetime.date() == date.min:
-            return None
-        else:
-            return self._datetime.date()
+        return self._date
 
     @property
     def time(self):
@@ -182,10 +182,7 @@ class Post(object):
         object from the post, in which case a value of None is returned.
 
         """
-        if self._datetime.time() == time.min:
-            return None
-        else:
-            return self._datetime.time()
+        return self._time
 
     @property
     def html(self):
