@@ -9,7 +9,28 @@ class Author(dict):
     """
     A dict-like object representing an author in a vBulletin thread.
 
+    Quick Function Reference:
+    add_post(Post) -- Easily attribute a post to this author.
+
+    Instance Attributes:
+    is_op (bool) -- Whether or not this author started the thread.
+    name (str) -- The author's user name.
+    parent (Thread) -- The author's parent thread.
+    posts (list) -- All of the author's Posts.
+    post_numbers (list) -- All of the numbers of the author's Posts.
+
+    The Author class works similarly to a dictionary; post numbers are
+    keys that reference a Post object value. When testing for membership
+    (e.g. while using the 'if Post in Author'), both post numbers and
+    Post objects are acceptable search values.
+
+    Author.posts and Author.post_numbers both return pre-sorted lists
+    according to their member post numbers. To get a list ordered in the
+    same manner as the Author object dictionary, use Author.keys() for
+    post numbers or Author.values() for Post objects.
+
     """
+
     def __init__(self, author_name, parent_thread):
         """
         Create an author object using a user name and a parent thread.
@@ -24,18 +45,30 @@ class Author(dict):
         self._name = author_name
         self._parent = parent_thread
 
+    def add_post(self, post):
+        """
+        Attribute a Post to this author.
+
+        This method is essentially a shorthand method for adding a post,
+        ensuring that the dictionary value is added properly.
+
+        """
+        self[post.number] = post
+
+    @property
+    def is_op(self):
+        """Test if this author is the Thread creator."""
+        return 1 in self
+
     @property
     def name(self):
         """Get the name of the author."""
         return self._name
 
     @property
-    def numbers(self):
-        """
-        Get a list of post numbers contained in this author object.
-
-        """
-        return sorted(self.keys())
+    def parent(self):
+        """Get the parent Thread of this author."""
+        return self._parent
 
     @property
     def posts(self):
@@ -46,9 +79,12 @@ class Author(dict):
         return sorted(self.values())
 
     @property
-    def parent(self):
-        """Get the parent Thread of this author."""
-        return self._parent
+    def post_numbers(self):
+        """
+        Get a list of post numbers contained in this author object.
+
+        """
+        return sorted(self.keys())
 
     # Comparator functions
     def __eq__(self, other):
@@ -160,11 +196,9 @@ class Post(object):
 
         """
 
-        # BEGIN EXTRANEOUS CLASS REFERENCES
         self._parent = parent_thread
         self._author = self._parent.get_author(str(post_tag.find("span",
                        "username").get_text().strip()))
-        # END EXTRANEOUS CLASS REFERENCES
         self._post_number = int(post_tag['id'].replace("post_", ""))
         self._post_tag = post_tag.find("blockquote", "restore")
 
@@ -233,7 +267,7 @@ class Post(object):
             else:
                 self._time = None
 
-        self._author[self._post_number] = self
+        self._author.add_post(self)
 
     def get_clean_content(self, **kwargs):
         """
