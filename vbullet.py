@@ -5,6 +5,97 @@ from datetime import timedelta, date, datetime, time
 import re
 
 
+class Author(dict):
+    """
+    A dict-like object representing an author in a vBulletin thread.
+
+    """
+    def __init__(self, author_name, parent_thread):
+        """
+        Create an author object using a user name and a parent thread.
+
+        Positional Arguments:
+        author_name (str) -- The author's given user name.
+        parent_thread (Thread) -- The Thread that this author's posts
+                                  are located in.
+
+        """
+        dict.__init__(self)
+        self._name = author_name
+        self._parent = parent_thread
+
+    @property
+    def name(self):
+        """Get the name of the author."""
+        return self._name
+
+    @property
+    def numbers(self):
+        """
+        Get a list of post numbers contained in this author object.
+
+        """
+        return sorted(self.keys())
+
+    @property
+    def posts(self):
+        """
+        Get a list of post objects contained in this author object.
+
+        """
+        return sorted(self.values())
+
+    @property
+    def parent(self):
+        """Get the parent Thread of this author."""
+        return self._parent
+
+    # Comparator functions
+    def __eq__(self, other):
+        """Determine if this author is the same as another"""
+        return self.name == other.name
+
+    def __ne__(self, other):
+        """Determine if this author is not the same as another"""
+        return self.name != other.name
+
+    def __lt__(self, other):
+        """
+        Determine if this author has made fewer posts than another.
+
+        """
+        return len(self) < len(other)
+
+    def __le__(self, other):
+        """
+        Determine if this author has made the same amount of or a lesser
+        amount of posts than another user.
+
+        """
+        return len(self) <= len(other)
+
+    def __gt__(self, other):
+        """Determine if this author has made more posts than another."""
+        return len(self) > len(other)
+
+    def __ge__(self, other):
+        """
+        Determine if this author has made the same amount of or a
+        greater amount of posts than another user.
+
+        """
+        return len(self) >= len(other)
+
+    # Collection functions
+    def __contains__(self, item):
+        """
+        Determine if this author has made a given post by number or
+        Post object.
+
+        """
+        return item in self.keys() or item in self.values()
+
+
 class Post(object):
     """
     An object representing a vBulletin forum post.
@@ -29,16 +120,18 @@ class Post(object):
         Create a post object using data from a forum post HTML tag.
 
         Positional Arguments:
-        post_tag -- A BS4 Tag object whose name should be "li" and whose
-                    id attribute should be "post_" followed by a number.
-        parent_thread -- The Thread object that contains this post.
+        post_tag (Tag) -- A BS4 Tag whose name should be "li" and whose
+                          id attribute should be "post_" followed by a
+                          number.
+        parent_thread (Thread) -- The Thread that contains this post.
 
         Optional Arguments:
-        date_format -- A 'y-m-d' style string representing the
-                       way the forum formats dates. None by default.
-        time_format -- An 'm:s' style string representing the exact
-                       way the forum formats time strings.
-                       None by default.
+        date_format (str) -- A 'y-m-d' style string representing the
+                             way the forum formats dates. None by
+                             default.
+        time_format (str) -- An 'm:s' style string representing the way
+                             the forum formats time strings. None by
+                             default.
 
         Raises:
         ValueError -- raised if a given date or time format string is
@@ -67,13 +160,13 @@ class Post(object):
 
         """
 
+        # BEGIN EXTRANEOUS CLASS REFERENCES
         self._parent = parent_thread
         self._author = self._parent.get_author(str(post_tag.find("span",
                        "username").get_text().strip()))
-        self._author.add(self)
+        # END EXTRANEOUS CLASS REFERENCES
         self._post_number = int(post_tag['id'].replace("post_", ""))
-        self._post_tag = (post_tag.find("blockquote", "restore")
-                          .replace_with_children())
+        self._post_tag = post_tag.find("blockquote", "restore")
 
         # Date and time calculation begins with determining whether
         # or not the post date and time are formatted in the
@@ -140,6 +233,8 @@ class Post(object):
             else:
                 self._time = None
 
+        self._author[self._post_number] = self
+
     def get_clean_content(self, **kwargs):
         """
         Get a cleaned-up, non-html version of a post's content.
@@ -188,6 +283,7 @@ class Post(object):
     @property
     def html(self):
         """Get the pure HTML content of the post."""
+        # Shouldn't include the topmost <blockquote> tag. Needs update.
         return str(self._post_tag)
 
     @property
@@ -218,25 +314,25 @@ class Post(object):
 
     # Sorting functions
     def __eq__(self, other):
-        """Determine if this post is the same as another"""
+        """Determine if this post is the same as another."""
         return self._post_tag == other._post_tag
 
     def __ne__(self, other):
-        """Determine if this post is not the same as another"""
+        """Determine if this post is not the same as another."""
         return self._post_tag != other._post_tag
 
     def __lt__(self, other):
-        """Determine if this post comes before another"""
+        """Determine if this post comes before another."""
         return self._post_number < other._post_number
 
     def __le__(self, other):
-        """Determine if this post comes before or is next to another"""
+        """Determine if this post comes before or is next to another."""
         return self._post_number <= other._post_number
 
     def __gt__(self, other):
-        """Determine if this post comes after another"""
+        """Determine if this post comes after another."""
         return self._post_number > other._post_number
 
     def __ge__(self, other):
-        """Determine if this post comes after or is next to another"""
+        """Determine if this post comes after or is next to another."""
         return self._post_number >= other._post_number
