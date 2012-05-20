@@ -160,16 +160,6 @@ class Post(object):
         return self._post_number
 
     @property
-    def datetime(self):
-        """
-        Get the date on and time at which the post was made.
-
-        Returns a datetime object.
-
-        """
-        return self._datetime
-
-    @property
     def date(self):
         """
         Get the date on which the post was made.
