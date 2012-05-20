@@ -9,25 +9,40 @@ class Post(object):
     """
     An object representing a vBulletin forum post.
 
+    Quick function reference:
+    get_clean_content(**kwargs) -- Get a cleaned post content string.
+
+    Instance Attributes:
+    Post.author (Author) -- The post's author.
+    Post.date (date) -- The date on which the post was made.
+    Post.html (str) -- The post content's internal HTML.
+    Post.number (int) -- The post number. First post number is 1.
+    Post.parent (Thread) -- The parent Thread of this post.
+    Post.tag (Tag) -- The BS4 tag representing the post's content.
+    Post.time (time) -- The time at which the post was made.
+
     """
 
-    def __init__(self, post_tag, date_format=None, time_format=None):
+    def __init__(self, post_tag, parent_thread, date_format=None,
+                 time_format=None):
         """
         Create a post object using data from a forum post HTML tag.
 
         Positional Arguments:
         post_tag -- A BS4 Tag object whose name should be "li" and whose
-            id attribute should be "post_" followed by a number.
+                    id attribute should be "post_" followed by a number.
+        parent_thread -- The Thread object that contains this post.
 
         Optional Arguments:
         date_format -- A 'y-m-d' style string representing the
-            way the forum formats dates. None by default.
+                       way the forum formats dates. None by default.
         time_format -- An 'm:s' style string representing the exact
-            way the forum formats time strings. None by default.
+                       way the forum formats time strings.
+                       None by default.
 
         Raises:
         ValueError -- raised if a given date or time format string is
-        invalid for the string it tries to parse.
+                      invalid for the string it tries to parse.
 
         date_format and time_format are unnecessary if the forum date
         and time are in the "friendly" (e.g. "5 minutes ago") format.
@@ -52,8 +67,10 @@ class Post(object):
 
         """
 
-        self._author = str(post_tag.find("span", "username").get_text()
-            .strip())
+        self._parent = parent_thread
+        self._author = self._parent.get_author(str(post_tag.find("span",
+                       "username").get_text().strip()))
+        self._author.add(self)
         self._post_number = int(post_tag['id'].replace("post_", ""))
         self._post_tag = (post_tag.find("blockquote", "restore")
                           .replace_with_children())
@@ -158,11 +175,6 @@ class Post(object):
         return self._author
 
     @property
-    def number(self):
-        """Get the post's number."""
-        return self._post_number
-
-    @property
     def date(self):
         """
         Get the date on which the post was made.
@@ -174,6 +186,26 @@ class Post(object):
         return self._date
 
     @property
+    def html(self):
+        """Get the pure HTML content of the post."""
+        return str(self._post_tag)
+
+    @property
+    def number(self):
+        """Get the post's number."""
+        return self._post_number
+
+    @property
+    def parent(self):
+        """Get the parent Thread of this post."""
+        return self._parent
+
+    @property
+    def tag(self):
+        """Get the post's BS4 content tag."""
+        return self._post_tag
+
+    @property
     def time(self):
         """
         Get the time at which the post was made.
@@ -183,16 +215,6 @@ class Post(object):
 
         """
         return self._time
-
-    @property
-    def html(self):
-        """Get the pure HTML content of the post."""
-        return str(self._post_tag)
-
-    @property
-    def tag(self):
-        """Get the post's BS4 content tag."""
-        return self._post_tag
 
     # Sorting functions
     def __eq__(self, other):
