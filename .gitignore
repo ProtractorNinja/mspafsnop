@@ -26,9 +26,6 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 
-# Sublime stuff
-*.sublime-workspace
-*.sublime-project
-
-# The epub builder directory
-python-epub-builder/
+# Resources
+temp.txt
+vbullet-old.py
