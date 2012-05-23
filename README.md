@@ -18,7 +18,7 @@ GBPub, the Grand-Battle-to-ePub-inator
 --------------------------------------
 GBPub is a program designed to turn an MSPAFA Grand Battle into an eReader-compatible eBook. Its dependencies are:
 
-- [lxml](http://lxml.de/)
-- [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/)
+- vBullet!, included, which depends on:
+    - [lxml](http://lxml.de/)
+    - [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/)
 - Python ePub Builder, which will be included in the future
-- vBullet!, included
