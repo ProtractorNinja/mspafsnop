@@ -1,7 +1,8 @@
 # vBullet! vBulletin Thread Parser
 #!/usr/bin/env python
 
-from datetime import timedelta, date, datetime, time
+from datetime import timedelta, date, datetime
+import copy
 import re
 
 
@@ -200,7 +201,11 @@ class Post(object):
         self._author = self._parent.get_author(str(post_tag.find("span",
                        "username").get_text().strip()))
         self._post_number = int(post_tag['id'].replace("post_", ""))
-        self._post_tag = post_tag.find("blockquote", "restore")
+
+        self._post_tag = post_tag
+        self._content_tag = post_tag.find("blockquote", "restore")
+        self._html = "".join([str(child) for child in self._content_tag
+                                                      .children])
 
         # Date and time calculation begins with determining whether
         # or not the post date and time are formatted in the
@@ -274,28 +279,68 @@ class Post(object):
         Get a cleaned-up, non-html version of a post's content.
 
         Optional Keyword Arguments:
-        spoilers (bool) -- If true, remove all evidence of spoilers in
-                           the post. Default is true.
+        spoilers (bool) -- If True, remove all evidence of spoilers in
+                           the post. If False, treat spoilered content
+                           as if it were not contained in a spoiler.
+                           Default is true.
+        quotes (value) -- If True, remove all evidence of quotes in the
+                          post. If False, treat quoted text as if it
+                          were not quoted. If a str tuple or list, uses
+                          the first two values two wrap the content.
+                          Default is True.
         trim (bool) -- If true, cuts multiple newlines to a single
                        newline in the cleaned text. Default is true.
-        ignoretags (list) -- A list of tags to be ignored (that is,
+        ignoretags (list) -- A list of HTML tags to be ignored (that is,
                              *not* unwrapped to just text) in the
-                             cleaning process. Default is none.
+                             cleaning process. Default is None.
         regex (list) -- Removes all matches to the given regular
-                        expression in the post. Default is none.
+                        expression in the post. Default is None.
 
         """
+        content = copy.deepcopy(self._content_tag)
 
+        # Spoiler HTML formatting:
+        # ...
+        # <div>
+        #   <div>
+        #     <button></button>
+        #   </div>
+        #   <div class="spoiler">
+        #     <div>
+        #       <button></button>
+        #     </div>
+        #     Content (We want this bit)
+        #   </div>
+        # </div>
+        # ...
         if kwargs.get("spoilers", True):
+            for spoiler in content.find_all("div", "spoiler"):
+                spoiler.parent.decompose()
+        else:
+            for spoiler in content.find_all("div", "spoiler"):
+                spoiler.div.decompose()
+                spoiler.parent.div.decompose()
+                spoiler.parent.replace_with_children()
+                spoiler.replace_with_children()
+
+        quotes = kwargs.get("quotes", True)
+        if type(quotes) is tuple or type(quotes) is list:
+            pass
+        elif quotes:
+            pass
+        else:
+            pass
+
+        ignoretags = kwargs.get("ignoretags", None)
+        if ignoretags:
+            pass
+
+        # This is done AFTER just text is acquired
+        regex = kwargs.get("regex", None)
+        if regex:
             pass
 
         if kwargs.get("trim", False):
-            pass
-
-        if kwargs.get("ignoretags", None):
-            pass
-
-        if kwargs.get("regex", None):
             pass
 
     @property
@@ -317,8 +362,12 @@ class Post(object):
     @property
     def html(self):
         """Get the pure HTML content of the post."""
-        # Shouldn't include the topmost <blockquote> tag. Needs update.
-        return str(self._post_tag)
+        return self._html
+
+    @property
+    def content(self):
+        """Get the pure HTML content of the post."""
+        return self._html
 
     @property
     def number(self):
@@ -331,9 +380,14 @@ class Post(object):
         return self._parent
 
     @property
-    def tag(self):
-        """Get the post's BS4 content tag."""
+    def post_tag(self):
+        """Get the post's BS4 tag."""
         return self._post_tag
+
+    @property
+    def tag(self):
+        """Get the post's BS4 content-only tag."""
+        return self._content_tag
 
     @property
     def time(self):
