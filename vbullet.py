@@ -320,8 +320,8 @@ class Post(object):
             for spoiler in content.find_all("div", "spoiler"):
                 spoiler.div.decompose()
                 spoiler.parent.div.decompose()
-                spoiler.parent.replace_with_children()
-                spoiler.replace_with_children()
+                spoiler.parent.unwrap()
+                spoiler.unwrap()
 
         quotes = kwargs.get("quotes", True)
         if type(quotes) is tuple or type(quotes) is list:
