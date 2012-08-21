@@ -299,20 +299,6 @@ class Post(object):
         """
         content = copy.deepcopy(self._content_tag)
 
-        # Spoiler HTML formatting:
-        # ...
-        # <div>
-        #   <div>
-        #     <button></button>
-        #   </div>
-        #   <div class="spoiler">
-        #     <div>
-        #       <button></button>
-        #     </div>
-        #     Content (We want this bit)
-        #   </div>
-        # </div>
-        # ...
         if kwargs.get("spoilers", True):
             for spoiler in content.find_all("div", "spoiler"):
                 spoiler.parent.decompose()
@@ -424,3 +410,14 @@ class Post(object):
     def __ge__(self, other):
         """Determine if this post comes after or is next to another."""
         return self._post_number >= other._post_number
+
+
+class Quote(Post):
+    """
+    A post-like object containing data referencing a quote, that is,
+    another post, from inside of a Post.
+
+    """
+
+    def __init__(self):
+        
