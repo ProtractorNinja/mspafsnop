@@ -181,19 +181,21 @@ class Post(object):
         "today" or "yesterday." Post object calls to date, time, and
         datetime will return None if so.
 
-        Use the PHP date function documentation for string reference.
+        Use the PHP date function documentation for string reference:
+        http://php.net/manual/en/function.date.php
 
         Example:
         Say the post's post time data says "07 Mon 2012 18:22"
         A working call would be this:
         post = Post(tag, 'm D Y', 'g:i')
 
-        Because some formats are similar with certain numbers (like
-        those that exclude a preceding zero), more than one example
-        string may be necessary to determine the correct format. The
-        previous time string example also would have worked with 'G:i',
-        because there was not way to tell if an hour lower than 10 would
-        have included a 0.
+        Because some formats appear identical with certain numbers (like
+        those that exclude a preceding zero) involved, examining more
+        than one example string may be necessary to determine the
+        correct format. The example immediately preceding this paragraph
+        also would have worked with 'G:i' as the time_format argument,
+        because there was no way to tell if an hour lower than 10 would
+        have included a 0 (e.g. 09:42 versus 9:42)
 
         """
 
@@ -286,7 +288,7 @@ class Post(object):
         quotes (value) -- If True, remove all evidence of quotes in the
                           post. If False, treat quoted text as if it
                           were not quoted. If a str tuple or list, uses
-                          the first two values two wrap the content.
+                          the first two values to wrap the content.
                           Default is True.
         trim (bool) -- If true, cuts multiple newlines to a single
                        newline in the cleaned text. Default is true.
@@ -420,4 +422,4 @@ class Quote(Post):
     """
 
     def __init__(self):
-        
+        pass
