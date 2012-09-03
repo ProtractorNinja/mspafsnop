@@ -1,4 +1,5 @@
-# vBullet! vBulletin Thread Parser
+# MSPAF SNOP
+# MSPA Forums Silly-Named Opinion Parser
 #!/usr/bin/env python
 
 from datetime import timedelta, date, datetime
@@ -192,10 +193,10 @@ class Post(object):
         Because some formats appear identical with certain numbers (like
         those that exclude a preceding zero) involved, examining more
         than one example string may be necessary to determine the
-        correct format. The example immediately preceding this paragraph
-        also would have worked with 'G:i' as the time_format argument,
-        because there was no way to tell if an hour lower than 10 would
-        have included a 0 (e.g. 09:42 versus 9:42)
+        correct format. The previous example also would have worked with
+        'G:i' as the time_format argument, because there was no way to
+        tell if an hour lower than 10 would have included a 0 (e.g.
+        09:42 versus 9:42)
 
         """
 
@@ -203,11 +204,49 @@ class Post(object):
         self._author = self._parent.get_author(str(post_tag.find("span",
                        "username").get_text().strip()))
         self._post_number = int(post_tag['id'].replace("post_", ""))
-
         self._post_tag = post_tag
+
+        # We'll be modifying the content tag later on, so _o_content_tag
+        # exists in case we want access to the unmodified original.
         self._content_tag = post_tag.find("blockquote", "restore")
-        self._html = "".join([str(child) for child in self._content_tag
+        self._o_content_tag = copy.deepcopy(self._content_tag)
+
+        # Create a pure HTML string representing the post's content
+        self._html = "".join([str(child) for child in self._o_content_tag
                                                       .children])
+
+        # HTML-to-effective-BBCode is probably broken but the concept is
+        # there.
+
+        # Find all the spoilers and replace the content with
+        # <spoiler>...</spoiler>
+        for spoiler in self._content_tag.find_all("div", "spoiler"):
+            spoiler.parent.wrap(self._content_tag.new_tag("spoiler"))
+            spoiler.div.decompose()
+            spoiler.parent.div.decompose()
+            spoiler.parent.unwrap()
+            spoiler.unwrap()
+
+        # Find bbcode_container elements (like Quotes and Code tags -
+        # these are different in structure from spoilers, as spoilers
+        # appear to be provided by a vBulletin plugin that does not
+        # encode to HTML in the same way) and replace the tag with
+        # <[bbcodename]>...</[bbcodename]>
+        for bbelem in self._content_tag.find_all("div", "bbcode_container"):
+            code_name = str(bbelem.div.extract().string)[:-1].lower()
+            code_tag = bbelem.new_tag(code_name)
+            code_has_author = bbelem.div.div.strong
+            for hr in bbelem.find_all("hr"):
+                hr.decompose()
+            if code_has_author:
+                code_tag['author'] = str(code_has_author.string)
+                code_parent = bbelem.wrap(code_tag)
+                bbelem.replace_with(bbelem.find("div", "message"))
+                code_parent.find("div", "message").unwrap()
+            else:
+                bbelem.wrap(code_tag)
+                bbelem.div.unwrap()
+                bbelem.unwrap()
 
         # Date and time calculation begins with determining whether
         # or not the post date and time are formatted in the
@@ -235,20 +274,16 @@ class Post(object):
         else:
             # If the date & time formatting option for the forum isn't
             # on the friendly setting, date and time are always
-            # separated by the character sequence ", ".
-            #
-            # However, the date string may include these characters as
-            # well, so separating the datetime string based on ", " may
-            # split the string in the wrong place. To account for this,
-            # the datetime string is reversed and then split using the
-            # first (which is actually the last in the non-reversed
-            # string) instance of " ," (the separator, reversed), then
-            # each entry in the new list is reversed to get the natural
-            # ordering back.
-            datetime_list = datetime_string[::-1].split(" ,", maxsplit=1)
-            datetime_list = [lambda x: x[::-1] for x in datetime_list]
-            date_string = datetime_list[0]
-            time_string = datetime_list[1]
+            # separated by the character sequence ", ". Since the date
+            # string might include the same sequence (e.g. if the format
+            # was "Day, Month, Year"), after the string is split based
+            # on ", " all of the strings except for the last one are
+            # joined via the same sequence and the last is left alone.
+            # This effectively splits one time starting at the end of
+            # the string.
+            datetime_list = datetime_string.split(", ")
+            date_string = ", ".join(datetime_list[:-1])
+            time_string = datetime_list[-1]
 
             if "today" in date_string:
                 self._date = date.today()
@@ -299,7 +334,7 @@ class Post(object):
                         expression in the post. Default is None.
 
         """
-        content = copy.deepcopy(self._content_tag)
+        content = copy.deepcopy(self._o_content_tag)
 
         if kwargs.get("spoilers", True):
             for spoiler in content.find_all("div", "spoiler"):
@@ -375,7 +410,7 @@ class Post(object):
     @property
     def tag(self):
         """Get the post's BS4 content-only tag."""
-        return self._content_tag
+        return self._o_content_tag
 
     @property
     def time(self):
@@ -412,14 +447,3 @@ class Post(object):
     def __ge__(self, other):
         """Determine if this post comes after or is next to another."""
         return self._post_number >= other._post_number
-
-
-class Quote(Post):
-    """
-    A post-like object containing data referencing a quote, that is,
-    another post, from inside of a Post.
-
-    """
-
-    def __init__(self):
-        pass
