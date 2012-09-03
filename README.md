@@ -12,4 +12,4 @@ Proper execution of MSPAF SNOP depends on the existence of external libraries no
 - [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/) - for working effectively with the forum HTML tree
 
 ## License
-vBullet! is licensed under a very simple BSD license. See vbullet-license.txt for details.
+MSPAF SNOP is licensed under a very simple BSD license. See vbullet-license.txt for details.
