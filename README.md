@@ -28,4 +28,4 @@ of external libraries not included in vanilla Python 2.7.3. These are:
 
 ## License 
 MSPAF SNOP is licensed under a very simple BSD license. See
-vbullet-license.txt for details.
+snop-license.txt for details.
